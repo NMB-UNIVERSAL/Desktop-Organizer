@@ -90,7 +90,7 @@ const TimerWidget = ({ widgetId }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-800/50">
+    <div className="h-full flex flex-col theme-bg theme-fg">
       {/* Drag handle header */}
       <div className="drag-handle p-3 border-b border-slate-700/30">
         <div className="flex items-center justify-between">

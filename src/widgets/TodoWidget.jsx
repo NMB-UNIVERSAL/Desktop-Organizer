@@ -31,11 +31,10 @@ const TodoWidget = ({ widgetId }) => {
     loadTodos();
   }, [widgetId]);
 
-  // Save todos to electron-store whenever todos change
+  // Save todos with a small debounce
   useEffect(() => {
     if (!hasLoaded || !widgetId || !window.electronAPI) return;
-    console.log("Saving todos for widget:", widgetId);
-    async function saveTodos() {
+    const timeoutId = setTimeout(async () => {
       try {
         const result = await window.electronAPI.saveData(
           `todos-${widgetId}`,
@@ -47,8 +46,8 @@ const TodoWidget = ({ widgetId }) => {
       } catch (e) {
         console.error("Error while saving todos:", e);
       }
-    }
-    saveTodos();
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [todos, widgetId, hasLoaded]);
 
   const addTodo = () => {
@@ -83,7 +82,7 @@ const TodoWidget = ({ widgetId }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col theme-fg">
       {/* Drag handle header */}
       <div className="drag-handle p-3 border-b border-slate-700/30">
         <div className="flex items-center justify-between">
@@ -93,7 +92,7 @@ const TodoWidget = ({ widgetId }) => {
               <div className="w-3 h-3 rounded-full bg-yellow-500/60"></div>
               <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
             </div>
-            <h2 className="text-[white] font-medium text-sm">Todo List</h2>
+            <h2 className="font-medium text-sm">Todo List</h2>
           </div>
           <button
             onClick={() =>
@@ -119,7 +118,7 @@ const TodoWidget = ({ widgetId }) => {
             onChange={(e) => setNewTodo(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Add new task..."
-            className="flex-1 px-3 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-lg text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-colors"
+            className="flex-1 px-3 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-lg placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-colors"
           />
           <button
             onClick={addTodo}
@@ -138,7 +137,7 @@ const TodoWidget = ({ widgetId }) => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -100 }}
-                className={`flex items-center text-[white] gap-3 p-3 bg-slate-800/30 backdrop-blur-sm border border-slate-600/20 rounded-lg group hover:bg-slate-700/30 transition-colors ${
+                className={`flex items-center gap-3 p-3 bg-slate-800/30 backdrop-blur-sm border border-slate-600/20 rounded-lg group hover:bg-slate-700/30 transition-colors ${
                   todo.completed ? "opacity-60" : ""
                 }`}
               >
@@ -150,7 +149,7 @@ const TodoWidget = ({ widgetId }) => {
                 </button>
 
                 <span
-                  className={`flex-1 text-sm text-white ${
+                  className={`flex-1 text-sm ${
                     todo.completed ? "line-through text-slate-300" : ""
                   }`}
                 >
@@ -169,9 +168,7 @@ const TodoWidget = ({ widgetId }) => {
 
           {todos.length === 0 && (
             <div className="text-center py-8 text-slate-400">
-              <p className="text-sm text-[white]">
-                No tasks yet. Add one above!
-              </p>
+              <p className="text-sm">No tasks yet. Add one above!</p>
             </div>
           )}
         </div>
@@ -179,7 +176,7 @@ const TodoWidget = ({ widgetId }) => {
         {/* Stats footer */}
         {todos.length > 0 && (
           <div className="mt-4 pt-3 border-t border-slate-700/30">
-            <div className="flex justify-between text-xs text-[white]">
+            <div className="flex justify-between text-xs">
               <span>{todos.filter((t) => !t.completed).length} pending</span>
               <span>{todos.filter((t) => t.completed).length} completed</span>
             </div>

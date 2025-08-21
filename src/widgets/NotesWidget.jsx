@@ -52,7 +52,7 @@ const NotesWidget = ({ widgetId }) => {
   }, [notes, widgetId, hasLoaded]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col theme-fg">
       {/* Drag handle header */}
       <div className="drag-handle p-3 border-b border-slate-700/30">
         <div className="flex items-center justify-between">
@@ -62,7 +62,7 @@ const NotesWidget = ({ widgetId }) => {
               <div className="w-3 h-3 rounded-full bg-yellow-500/60"></div>
               <div className="w-3 h-3 rounded-full bg-green-500/60"></div>
             </div>
-            <h2 className="text-[white] font-medium text-sm">Quick Notes</h2>
+            <h2 className="font-medium text-sm">Quick Notes</h2>
           </div>
           <button
             onClick={() =>
@@ -90,7 +90,7 @@ const NotesWidget = ({ widgetId }) => {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Type your notes here..."
-          className="w-full h-full bg-transparent text-[white] placeholder-slate-400 
+          className="w-full h-full bg-transparent placeholder-slate-400 
                      resize-none focus:outline-none text-sm leading-relaxed"
           spellCheck="false"
         />

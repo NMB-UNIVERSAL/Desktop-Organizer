@@ -49,10 +49,10 @@ const Calendar = ({ widgetId }) => {
     loadEvents();
   }, [widgetId]);
 
-  // Persist events to unified storage (fallback to localStorage in web)
+  // Persist events to unified storage (fallback to localStorage in web) with debounce
   useEffect(() => {
     if (!hasLoaded) return;
-    async function saveEvents() {
+    const timeoutId = setTimeout(async () => {
       try {
         if (window.electronAPI && widgetId) {
           await window.electronAPI.saveData(`calendar-${widgetId}`, events);
@@ -65,8 +65,8 @@ const Calendar = ({ widgetId }) => {
       } catch (e) {
         // Ignore save errors in UI
       }
-    }
-    saveEvents();
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [events, widgetId, hasLoaded]);
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -137,7 +137,7 @@ const Calendar = ({ widgetId }) => {
 
   return (
     <div
-      className="bg-slate-800/50 text-[white] rounded-lg p-3 h-full flex flex-col"
+      className="theme-bg theme-fg rounded-lg p-3 h-full flex flex-col"
       style={{ minWidth: "360px", minHeight: "540px" }}
     >
       {/* Drag handle header */}

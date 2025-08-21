@@ -8,6 +8,11 @@ import { Plus, Calendar, CheckSquare, StickyNote, Timer } from "lucide-react";
 const App = () => {
   const [widgetInfo, setWidgetInfo] = useState({ type: null, id: null });
   const [showWidgetMenu, setShowWidgetMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState({
+    backgroundColor: "#0f172aD9",
+    fontColor: "#ffffff",
+  });
 
   useEffect(() => {
     console.log("App component mounted");
@@ -31,6 +36,33 @@ const App = () => {
       setWidgetInfo(info);
     }
   }, []);
+
+  // Settings: load, listen, and apply CSS variables
+  useEffect(() => {
+    async function initSettings() {
+      try {
+        if (window.electronAPI) {
+          const res = await window.electronAPI.loadData("__settings");
+          if (res.success && res.data) {
+            setSettings((prev) => ({ ...prev, ...res.data }));
+          }
+        }
+      } catch (_) {}
+    }
+    initSettings();
+    const off = window.electronAPI?.onSettingsUpdated?.((s) =>
+      setSettings((p) => ({ ...p, ...s }))
+    );
+    return () => {
+      if (typeof off === "function") off();
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--widget-bg", settings.backgroundColor);
+    root.style.setProperty("--widget-fg", settings.fontColor);
+  }, [settings]);
 
   const createWidget = async (type) => {
     console.log("Creating widget of type:", type);
@@ -157,7 +189,7 @@ const App = () => {
 
           {/* Right side - Close and Widget Menu */}
           <div
-            className="flex items-center gap-2 no-drag"
+            className="flex-col items-center gap-2 no-drag"
             style={{ WebkitAppRegion: "no-drag" }}
           >
             <button
@@ -169,6 +201,14 @@ const App = () => {
               aria-label="Close App"
             >
               ×
+            </button>
+            <button
+              onClick={() => setShowSettings((v) => !v)}
+              className="px-2 py-1 text-sm rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-white border border-slate-500/30"
+              title="Settings"
+              aria-label="Settings"
+            >
+              Settings
             </button>
             <div className="relative">
               {/* Menu Trigger Button */}
@@ -282,6 +322,42 @@ const App = () => {
           </div>
         </div>
       </div>
+      {showSettings && (
+        <div className="no-drag p-3">
+          <div className="rounded-lg border border-slate-600/40 p-3 bg-slate-800/50">
+            <div className="grid grid-cols-2 gap-3 items-center">
+              <label className="text-sm text-[white] font-bold">Background</label>
+              <input
+                type="color"
+                value={settings.backgroundColor.slice(0, 7)}
+                onChange={async (e) => {
+                  const hex = e.target.value; // keep alpha suffix
+                  const newColor =
+                    hex +
+                    (settings.backgroundColor.length > 7
+                      ? settings.backgroundColor.slice(7)
+                      : "D9");
+                  const next = { ...settings, backgroundColor: newColor };
+                  setSettings(next);
+                  await window.electronAPI?.updateSettings(next);
+                }}
+                className="w-24 h-8"
+              />
+              <label className="text-sm text-[white] font-bold">Font</label>
+              <input
+                type="color"
+                value={settings.fontColor}
+                onChange={async (e) => {
+                  const next = { ...settings, fontColor: e.target.value };
+                  setSettings(next);
+                  await window.electronAPI?.updateSettings(next);
+                }}
+                className="w-24 h-8"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

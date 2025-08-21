@@ -70,6 +70,7 @@ let widgets = new Map();
 let isDesktopVisible = true;
 let desktopCheckInterval;
 const boundsSaveTimers = new Map();
+let globalSettings = { backgroundColor: "#0f172a80", fontColor: "#ffffff" };
 
 // Set up IPC handlers for unified storage.json
 ipcMain.handle("save-data", async (event, { key, data }) => {
@@ -282,6 +283,13 @@ function createWidget(type, options = {}) {
 
 app.whenReady().then(async () => {
   await ensureStorageFile();
+  // Load settings
+  try {
+    const storage = await readStorage();
+    if (storage.data && storage.data.__settings) {
+      globalSettings = { ...globalSettings, ...storage.data.__settings };
+    }
+  } catch (_) {}
   createWidgetManager();
 
   // Show widgets by default
@@ -377,4 +385,31 @@ ipcMain.handle("close-app", async () => {
     await writeStorage(storage);
   } catch (_) {}
   app.quit();
+});
+
+// Settings handlers
+ipcMain.handle("update-settings", async (event, newSettings) => {
+  try {
+    globalSettings = { ...globalSettings, ...newSettings };
+    const storage = await readStorage();
+    storage.data.__settings = globalSettings;
+    await writeStorage(storage);
+    // Broadcast to all windows
+    for (const bw of BrowserWindow.getAllWindows()) {
+      bw.webContents.send("settings-updated", globalSettings);
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+});
+
+ipcMain.handle("get-settings", async () => {
+  try {
+    const storage = await readStorage();
+    const s = storage.data.__settings || globalSettings;
+    return { success: true, data: s };
+  } catch (e) {
+    return { success: true, data: globalSettings };
+  }
 });

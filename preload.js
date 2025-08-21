@@ -9,4 +9,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Storage methods
   saveData: (key, data) => ipcRenderer.invoke("save-data", { key, data }),
   loadData: (key) => ipcRenderer.invoke("load-data", { key }),
+  updateSettings: (settings) => ipcRenderer.invoke("update-settings", settings),
+  onSettingsUpdated: (callback) => {
+    const listener = (_event, settings) => callback(settings);
+    ipcRenderer.on("settings-updated", listener);
+    return () => ipcRenderer.removeListener("settings-updated", listener);
+  },
 });
